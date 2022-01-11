@@ -20,15 +20,6 @@
     }
   }
 
-  .recommendations.green-400 {
-    color: var(--pf-global--palette--green-400);
-  }
-
-  .recommendations {
-    padding-left: var(--pf-global--spacer--lg);
-    font-weight: var(--pf-global--FontWeight--bold);
-  }
-
   .pf-c-progress {
     grid-template-columns: auto;
 
@@ -56,32 +47,9 @@
   }
 }
 
-.green-100 {
-  .pf-c-progress__indicator {
-    background: var(--pf-global--palette--green-100);
-  }
-}
 
-.green-400 {
+.blue-300{
   .pf-c-progress__indicator {
-    background: var(--pf-global--palette--green-300);
-  }
-}
-
-.gold-400 {
-  .pf-c-progress__indicator {
-    background: var(--pf-global--palette--gold-300);
-  }
-}
-
-.orange-300 {
-  .pf-c-progress__indicator {
-    background: var(--pf-global--palette--orange-300);
-  }
-}
-
-.danger-200 {
-  .pf-c-progress__indicator {
-    background: var(--pf-global--palette--red-200);
+    background: var(--pf-global--palette--blue-300);
   }
 }
