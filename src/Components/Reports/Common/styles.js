@@ -15,20 +15,7 @@ export default StyleSheet.create({
         flex: 1
     },
     systemNameCell: {
-        textAlign: 'left',
-        fontSize: 8,
-        flex: 2.5,
-        paddingBottom: 2,
-        paddingTop: 2,
-        paddingRight: 2
-    },
-    osCell: {
-        textAlign: 'left',
-        fontSize: 8,
-        flex: 0.8,
-        paddingBottom: 2,
-        paddingTop: 2,
-        paddingRight: 2
+        width: '120px'
     },
     headerStyle: {
         display: 'flex',

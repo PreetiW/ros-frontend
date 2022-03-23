@@ -1,63 +1,22 @@
 import React, { Fragment } from 'react';
-import { Text } from '@react-pdf/renderer';
 import { DownloadButton, Section, Column, Table } from '@redhat-cloud-services/frontend-components-pdf-generator';
-import { SYSTEMS_PDF_REPORT_TITLE } from '../../constants';
+import { SYSTEMS_PDF_REPORT_FILE_NAME, SYSTEMS_PDF_REPORT_NAME } from '../../constants';
 import { fetchSystems } from '../../Utilities/api';
-import { formatData, generateFilterText, getSystemsReportFileName } from './Util';
-import propTypes from 'prop-types';
-import styles from './Common/styles';
+import { buildSystemsHeader, buildSystemsRows } from './Util';
 
-const columnBuilder = ({ value, style }) => <Text key={value} style={style}>{value}</Text>;
+const generateSystemsPDFReport = async () => {
+    const systemsResponse = await fetchSystems();
 
-const buildSystemsHeader = () => {
-
-    const headerContent = ['Name', 'OS', 'CPU utilization', 'Memory utilization', 'I/O utilization', 'Suggestions', 'State'];
-    const formattedHeader = headerContent.map(item => {
-        let styleArr = item === 'Name' ? [styles.systemNameCell] : [styles.headerCell];
-        return columnBuilder({ value: item, style: styleArr });
-    });
-
-    return formattedHeader;
-
-};
-
-const buildSystemsRows = (rowsData) => {
-    const systemsRows =  rowsData.map((rowItem) => {
-        const formattedRows = rowItem.map((rowValue, index) => {
-            let styleArr = index === 0 ? [styles.systemNameCell] : [styles.bodyCell];
-            return columnBuilder({ value: rowValue, style: styleArr });
-        });
-        return formattedRows;
-    });
-
-    return systemsRows;
-};
-
-const generateSystemsPDFReport = async (filters, orderBy, orderHow) => {
-    // Table header
+    const systemsRows = buildSystemsRows(systemsResponse.data);
     const systemsHeader = buildSystemsHeader();
 
-    // Table rows
-    const fetchSystemParams = {
-        filters,
-        stateFilter: filters.stateFilter,
-        orderBy,
-        orderHow
-    };
-    const systemsResponse = await fetchSystems(fetchSystemParams);
-    const pdfData = formatData(systemsResponse.data, 'pdf');
-
-    const systemsRows = buildSystemsRows(pdfData);
-
-    // description text
     const totalSystems = systemsResponse?.meta?.count;
-    const filterText = generateFilterText(filters);
 
     return [
         <Fragment key="first-section">
             <Section>
                 <Column>
-                    {`This report identified ${totalSystems} ${totalSystems > 1 ? 'RHEL systems' : 'RHEL system' }. ${filterText}`}
+                    {`This report identified ${totalSystems} RHEL systems.\n Filters applied\nState: All\t\t\t\t`}
                 </Column>
             </Section>
             <Section>
@@ -75,34 +34,23 @@ const generateSystemsPDFReport = async (filters, orderBy, orderHow) => {
     ];
 };
 
-export const DownloadSystemsPDFReport = ({ filters, orderBy, orderHow, ...props }) => {
-    const reportFileName = getSystemsReportFileName();
+export const DownloadSystemsPDFReport = ({ filters, ...props }) => {
+    const currentDate = `${new Date().toISOString().replace(/[T:]/g, '-').split('.')[0]}-utc`;
+    const reportFileName = `${SYSTEMS_PDF_REPORT_FILE_NAME}${currentDate}`;
 
     return (
         <div>
             <DownloadButton
                 {...props}
-                reportName={SYSTEMS_PDF_REPORT_TITLE}
+                reportName={SYSTEMS_PDF_REPORT_NAME}
                 type=""
                 fileName={`${reportFileName}.pdf`}
                 size="A4"
                 orientation="landscape"
                 allPagesHaveTitle={false}
-                asyncFunction={() => generateSystemsPDFReport(filters, orderBy, orderHow)}
+                asyncFunction={generateSystemsPDFReport}
             />
         </div>
     );
 
-};
-
-DownloadSystemsPDFReport.propTypes = {
-    filters: propTypes.object,
-    orderBy: propTypes.string,
-    orderHow: propTypes.string
-
-};
-
-columnBuilder.propTypes = {
-    value: propTypes.string,
-    style: propTypes.array
 };
