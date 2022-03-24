@@ -1,36 +1,38 @@
-import { generateFilterText, formatData, responseToCSVData, responseToJSONData } from './Util';
-import { sysResponseTestData } from './UtilTestData';
+import { generateFilterText, responseToPDFData } from "./Util";
+
+
+
 
 describe('Util generateFilterText method tests', () => {
     it('should generate filter text for name filter', () => {
         const expectedFilterText = `\nFilters applied\nName: ros-system`;
         const filters = {
             hostnameOrId: 'ros-system'
-        };
+        }
         const actualFilterText = generateFilterText(filters);
 
-        expect(actualFilterText).toBe(expectedFilterText);
+        expect(actualFilterText).toBe(expectedFilterText)
     });
 
     it('should generate filter text for state filter', () => {
-        const expectedFilterText = `\nFilters applied\nState: Undersized,Waiting for data,Oversized\n`;
+        const expectedFilterText = `\nFilters applied\nState: Undersized,Waiting for data,Oversized\t\t\t\t\t`;
         const filters = {
             stateFilter: ['Undersized', 'Waiting for data', 'Oversized']
-        };
+        }
         const actualFilterText = generateFilterText(filters);
 
-        expect(actualFilterText).toBe(expectedFilterText);
+        expect(actualFilterText).toBe(expectedFilterText)
     });
 
     it('should generate filter text for name & state filter', () => {
-        const expectedFilterText = `\nFilters applied\nState: Undersized,Waiting for data,Oversized\nName: ros-system`;
+        const expectedFilterText = `\nFilters applied\nState: Undersized,Waiting for data,Oversized\t\t\t\t\tName: ros-system`;
         const filters = {
             hostnameOrId: 'ros-system',
             stateFilter: ['Undersized', 'Waiting for data', 'Oversized']
-        };
+        }
         const actualFilterText = generateFilterText(filters);
 
-        expect(actualFilterText).toBe(expectedFilterText);
+        expect(actualFilterText).toBe(expectedFilterText)
     });
 
     it('should generate empty filter string in case of no filters', () => {
@@ -38,7 +40,7 @@ describe('Util generateFilterText method tests', () => {
         const filters = {};
         const actualFilterText = generateFilterText(filters);
 
-        expect(actualFilterText).toBe(expectedFilterText);
+        expect(actualFilterText).toBe(expectedFilterText)
     });
 
     it('should generate empty filter string in case of no filters', () => {
@@ -49,7 +51,7 @@ describe('Util generateFilterText method tests', () => {
         };
         const actualFilterText = generateFilterText(filters);
 
-        expect(actualFilterText).toBe(expectedFilterText);
+        expect(actualFilterText).toBe(expectedFilterText)
     });
 
     it('should generate empty filter string in case of no filters', () => {
@@ -60,83 +62,53 @@ describe('Util generateFilterText method tests', () => {
         };
         const actualFilterText = generateFilterText(filters);
 
-        expect(actualFilterText).toBe(expectedFilterText);
+        expect(actualFilterText).toBe(expectedFilterText)
     });
 });
 
-describe('Util formatData method tests', () => {
+
+describe('Util responseToPDFData method tests', () => {
     it('should generate array of data in the format required to generate PDF', () => {
         const expectedSystemsRowsData = [
-            ['ip-172-31-28-69.ec2.internal', 'RHEL 8.4', '90%', '97%', '0.314', '1', 'Undersized'],
-            ['ros-system.internal', 'RHEL 8.4', '90%', '97%', '0.314', '1', 'Undersized']
+            ['ip-172-31-28-69.ec2.internal', 'RHEL 8.4', '90%', '97%', '0.314', '1', 'Undersized', '03 Mar 2022 06:58 UTC'],
+            ['ros-system.internal', 'RHEL 8.4', '90%', '97%', '0.314', '1', 'Undersized', '03 Mar 2022 06:58 UTC']
+        ]
+
+        const testData = [
+            {
+                "fqdn": "ip-172-31-28-69.ec2.internal", 
+                "display_name": "ip-172-31-28-69.ec2.internal", 
+                "inventory_id": "cd96482e-1fcb-49b4-958d-06315da16b9a", 
+                "account": "6089719", 
+                "number_of_suggestions": 1, 
+                "state": "Undersized", 
+                "performance_utilization": {
+                    "cpu": 90, "memory": 97,
+                    "max_io": 0.314, "io_all": {"xvda": 0.314}
+                },
+                "cloud_provider": "aws", 
+                "instance_type": "t2.micro", 
+                "idling_time": "19.70", 
+                "os": "RHEL 8.4"
+            }, 
+            {
+                "fqdn": "ip-172-31-28-69.ec2.internal", 
+                "display_name": "ros-system.internal", 
+                "inventory_id": "cd96482e-1fcb-49b4-958d-06315da16b9a", 
+                "account": "6089719", 
+                "number_of_suggestions": 1, 
+                "state": "Undersized", 
+                "performance_utilization": {"cpu": 90, "memory": 97, "max_io": 0.314, "io_all": {"xvda": 0.314}},
+                "cloud_provider": "aws", 
+                "instance_type": "t2.micro", 
+                "idling_time": "19.70", 
+                "os": "RHEL 8.4"
+            },
         ];
 
-        const actualSystemsRowsData = formatData(sysResponseTestData, 'pdf');
+        const actualSystemsRowsData = responseToPDFData(testData);
 
         expect(actualSystemsRowsData).toEqual(expectedSystemsRowsData);
 
-    });
-
-    it('should generate array of data (with 0%) in the format required to generate PDF', () => {
-        const expectedSystemsRowsData = [
-            ['ip-172-31-28-69.ec2.internal', 'RHEL 8.4', '0%', '0%', '0.314', '1', 'Undersized'],
-            ['ros-system.internal', 'RHEL 8.4', '90%', '97%', '0.314', '1', 'Undersized']
-        ];
-
-        sysResponseTestData[0].performance_utilization.cpu = 0;
-        sysResponseTestData[0].performance_utilization.memory = 0;
-
-        const actualSystemsRowsData = formatData(sysResponseTestData, 'pdf');
-
-        expect(actualSystemsRowsData).toEqual(expectedSystemsRowsData);
-
-    });
-
-    it('should generate array of data (handling null values) in the format required to generate PDF', () => {
-        const expectedSystemsRowsData = [
-            ['ip-172-31-28-69.ec2.internal', 'RHEL 8.4', 'N/A', 'N/A', '0.314', 'N/A', 'Undersized'],
-            ['ros-system.internal', 'RHEL 8.4', '90%', '97%', '0.314', '1', 'Undersized']
-        ];
-
-        sysResponseTestData[0].number_of_suggestions = null;  /* eslint-disable-line camelcase */
-        sysResponseTestData[0].performance_utilization.cpu = null;
-        sysResponseTestData[0].performance_utilization.memory = null;
-
-        const actualSystemsRowsData = formatData(sysResponseTestData, 'pdf');
-
-        expect(actualSystemsRowsData).toEqual(expectedSystemsRowsData);
-
-    });
-});
-
-describe('Util responseToCSVData test', () => {
-    it('should format the data into CSV format', () => {
-        // eslint-disable-next-line max-len
-        const expectedSystemsRowsData = `display_name,os,performance_utilization.cpu,performance_utilization.memory,performance_utilization.max_io,number_of_suggestions,state,cloud_provider,instance_type,idling_time\r\nip-172-31-28-69.ec2.internal,RHEL 8.4,90%,97%,0.314,1,Undersized,aws,t2.micro,19.70%\r\nros-system.internal,RHEL 8.4,90%,97%,0.314,1,Undersized,aws,t2.micro,19.70%`;
-
-        sysResponseTestData[0].number_of_suggestions = 1;  /* eslint-disable-line camelcase */
-        sysResponseTestData[0].performance_utilization.cpu = 90;
-        sysResponseTestData[0].performance_utilization.memory = 97;
-
-        const actualSystemsRowsData = responseToCSVData(sysResponseTestData);
-
-        expect(actualSystemsRowsData).toEqual(expectedSystemsRowsData);
-    });
-});
-
-describe('Util responseToJSONData test', () => {
-    it('should format the data into JSON string format ', () => {
-        // eslint-disable-next-line max-len
-        const expectedSystemsRowsData = '[{"display_name":"ip-172-31-28-69.ec2.internal","os":"RHEL 8.4","performance_utilization.cpu":"90%","performance_utilization.memory":"97%","performance_utilization.max_io":"0.314","number_of_suggestions":"1","state":"Undersized","cloud_provider":"aws","instance_type":"t2.micro","idling_time":"19.70%"}]';
-
-        sysResponseTestData[0].number_of_suggestions = 1;  /* eslint-disable-line camelcase */
-        sysResponseTestData[0].performance_utilization.cpu = 90;
-        sysResponseTestData[0].performance_utilization.memory = 97;
-
-        const sysResponseJSONData = sysResponseTestData.slice(0, 1);
-
-        const actualSystemsRowsData = responseToJSONData(sysResponseJSONData);
-
-        expect(actualSystemsRowsData).toEqual(expectedSystemsRowsData);
-    });
-});
+    })
+})
