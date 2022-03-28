@@ -43,7 +43,8 @@ class RosPage extends React.Component {
             stateFilterValue: [],
             isColumnModalOpen: false,
             exportSystemsPDF: false,
-            nameFilterValue: ''
+            nameFilterValue: '',
+            disableExport: true
         };
 
         this.sortingHeader = {
@@ -341,6 +342,7 @@ class RosPage extends React.Component {
                                 ]
                             }}
                             exportConfig={{
+                                isDisabled: this.state.disableExport,
                                 extraItems: [<Button
                                     key='pdf-download-button' variant='plain'
                                     onClick={() => this.setExportSystemsPDF(true)}>
