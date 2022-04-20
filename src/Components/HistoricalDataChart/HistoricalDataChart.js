@@ -20,9 +20,9 @@ export const HistoricalDataChart = () => {
 
     const [isOpen, setOpen] = useState(false);
     const [dateRange, setDateRange] = useState(7);
-    const [zoomedXDomain, setZoomedXDomain] = useState();
-    const [chartData, setChartData] = useState(series_7_days);
-    const [xTickValue, setXTickValues] = useState(tick_values_7)
+    const [zoomedXDomain, setZoomedXDomain] = useState([new Date('2022-04-04'), new Date('2022-05-15')]);
+    const [chartData, setChartData] = useState(series);
+    const [xTickValue, setXTickValues] = useState(tick_values_45)
     
     const VictoryZoomVoronoiContainer = createContainer("zoom", "voronoi");
 
@@ -41,9 +41,10 @@ export const HistoricalDataChart = () => {
             setXTickValues(tick_values_7);
             setZoomedXDomain([new Date('2022-04-01'), new Date('2022-04-07')])
         } else if(dateRange === 45){
-            setChartData(series);
-            setXTickValues(tick_values_45);
+            
+            //setXTickValues(tick_values_45);
             setZoomedXDomain([new Date('2022-04-04'), new Date('2022-05-15')])
+            setChartData(series);
         }
     }
 
@@ -55,17 +56,33 @@ export const HistoricalDataChart = () => {
     const getEntireDomain = () => {
         return {
             y: [0, 100],
-            x: [1, 14]
+            x: [new Date('2022-04-04'), new Date('2022-05-15')]
         };
     }
 
     const handleDomainChange = (domain) => {
         console.log("Handling zoom domain:", domain);
-        //setZoomedXDomain(domain.x);
+        setZoomedXDomain(domain.x);
     }
 
-    const getData = () => {
-        console.log("Getting data");
+    const getData = (data) => {
+        console.log("Getting data", data);
+        //const { data } = series[0].datapoints;
+        const filtered = data.filter(
+            // is d "between" the ends of the visible x-domain?
+            (d) => (d.x >= zoomedXDomain[0] && d.x <= zoomedXDomain[1]));
+
+         // new code here...
+        if (filtered.length > 7 ) {
+            const k = Math.ceil(filtered.length / 7);
+            return filtered.filter(
+            (d, i) => ((i % k) === 0)
+            );
+        }
+
+        console.log("Getting data", filtered);
+
+        return filtered;    
     }
 
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -94,6 +111,7 @@ export const HistoricalDataChart = () => {
             <div style={{ height: "275px" }}>
                 <Chart
                     scale={{x: "time"}}
+                    domain={getEntireDomain()}
                     ariaDesc="System Utilization"
                     ariaTitle="System Utilization"
                     containerComponent={
@@ -121,7 +139,7 @@ export const HistoricalDataChart = () => {
                     themeColor={ChartThemeColor.blue}>
 
                     <ChartAxis 
-                        tickValues={xTickValue}
+                        //tickValues={xTickValue}
                         tickFormat={(x) => `${new Date(x).getDate()} ${months[new Date(x).getMonth()]}`}
                         />
                     <ChartAxis 
@@ -134,7 +152,7 @@ export const HistoricalDataChart = () => {
                         {chartData.map((s, idx) => {
                             return (
                             <ChartScatter
-                                data={s.datapoints}
+                                data={getData(s.datapoints)}
                                 key={"scatter-" + idx}
                                 name={"scatter-" + idx}
                             />
@@ -148,7 +166,7 @@ export const HistoricalDataChart = () => {
                             <ChartLine
                                 key={"line-" + idx}
                                 name={"line-" + idx}
-                                data={s.datapoints}
+                                data={getData(s.datapoints)}
                             />
                             );
                         })}
