@@ -149,14 +149,21 @@ class RosPage extends React.Component {
 
     async fetchInventoryDetails(invIds, configOptns) {
         let results = [];
+        // if invIDs and config per page is greater than 50 then chunk the array into multiple getEntities
         if (configOptns.per_page > 50 && invIds.length > 50) {
             let recordsSubset = await this.multipleGetEntitiesRequests(invIds, configOptns);
             recordsSubset.map((records) => {
                 results.push(...records);
             });
         } else {
+            console.log("Get Entities:", this.state.getEntities);
+            // check the getEntities method here https://github.com/RedHatInsights/insights-inventory-frontend/blob/master/src/api/api.js#L104
+            // the getEntities is set during onLoad call of inventoryTable
+            // also check https://github.com/RedHatInsights/insights-inventory-frontend/blob/2782944ca402d6514851ce459a0e1ace21db97f0/src/store/inventory-actions.js#L54
+            // and https://github.com/RedHatInsights/insights-inventory-frontend/blob/2782944ca4/src/store/reducers.js#L154
             const response = await this.state.getEntities?.(invIds, configOptns, false);
             results = response.results;
+            console.log("Get Entities Result:", response);
         }
 
         return results;
@@ -307,11 +314,16 @@ class RosPage extends React.Component {
                             }}
                             columns={activeColumns}
                             getEntities={async (_items, config) => {
+                                // not using items, config is in use
+                                console.log("getEntities Config Receieved:", config);
+                                // setting state from config values
                                 this.setState(() => ({
                                     orderBy: config.orderBy,
                                     orderDirection: config.orderDirection,
                                     nameFilterValue: config.filters?.hostnameOrId
                                 }));
+
+
                                 const results = await this.fetchSystems(
                                     {
                                         page: config.page, perPage: config.per_page,
@@ -323,18 +335,30 @@ class RosPage extends React.Component {
                                     }
                                 );
 
+                                console.log("fetchSystems results:", results);
+                                
+                                // Extract out inventory IDs from the results
                                 const invIds = (results.data || []).map(({ inventory_id: inventoryId }) => inventoryId);
+                                console.log("invIds array:", invIds);    
+
+
                                 const invSystems = await this.fetchInventoryDetails(invIds, {
                                     ...config,
+                                    orderBy: undefined,
+                                    orderDirection: undefined,
                                     page: 1,
                                     hasItems: true
                                 });
 
+                                console.log("fetchInventoryDetails:invSystems:", invSystems);
+
+                                // Disabling PDF export button when there are no systems
                                 const disableExport = results?.meta?.count === 0;
                                 this.setState(() => ({
                                     disableExport
                                 }));
 
+                                // returning a result object where results: is an array of entities, total, page, per_page
                                 return {
                                     results: results.data.map((system) => {
                                         const invRec = invSystems.find(({ id }) => id === system.inventory_id);
@@ -350,6 +374,7 @@ class RosPage extends React.Component {
                                 };
                             }}
                             onLoad={({ mergeWithEntities, INVENTORY_ACTION_TYPES, api }) => {
+                                console.log("On Load called:", api);
                                 this.setState({
                                     getEntities: api?.getEntities
                                 });
